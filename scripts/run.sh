@@ -19,7 +19,7 @@ npm install -g "cognium-ai@$package_version"
 
 cognium-ai --version > "$version_file" 2>/dev/null || true
 
-scan_args=(scan "$target" -f json -o "$json_file" --file-timeout "$file_timeout" --quiet)
+scan_args=(scan "$target" --file-timeout "$file_timeout" --quiet)
 
 case "$mode" in
   static)
@@ -76,15 +76,22 @@ if [[ -n "${INPUT_EXTRA_ARGS:-}" ]]; then
   scan_args+=("${extra_args[@]}")
 fi
 
-echo "Running cognium-ai ${scan_args[*]}"
-cognium-ai "${scan_args[@]}"
+echo "Running native SARIF scan: cognium-ai ${scan_args[*]} -f sarif -o $sarif_file"
+cognium-ai "${scan_args[@]}" -f sarif -o "$sarif_file"
 
-node "$GITHUB_ACTION_PATH/scripts/json-to-sarif.mjs" "$json_file" "$sarif_file" "$(cat "$version_file" 2>/dev/null || true)"
+if [[ "${INPUT_JSON_OUTPUT:-false}" == "true" ]]; then
+  echo "Generating native JSON output: cognium-ai ${scan_args[*]} -f json -o $json_file"
+  cognium-ai "${scan_args[@]}" -f json -o "$json_file"
+fi
 
 findings_total="$(node -e "const fs=require('fs'); const s=fs.readFileSync(process.argv[1],'utf8'); const j=JSON.parse(s); const r=j.runs?.[0]?.results || []; console.log(r.length)" "$sarif_file")"
 
 {
-  echo "json-file=$json_file"
+  if [[ -f "$json_file" ]]; then
+    echo "json-file=$json_file"
+  else
+    echo "json-file="
+  fi
   echo "sarif-file=$sarif_file"
   echo "findings-total=$findings_total"
 } >> "$GITHUB_OUTPUT"

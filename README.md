@@ -2,7 +2,7 @@
 
 Run `cognium-ai` in GitHub Actions and publish SARIF results to GitHub code scanning.
 
-This action is intended for the GitHub Actions Marketplace under the Security category. It installs the `cognium-ai` npm package, scans the repository, converts JSON output to SARIF, and optionally uploads the SARIF file through `github/codeql-action/upload-sarif`.
+This action is intended for the GitHub Actions Marketplace under the Security category. It installs the `cognium-ai` npm package, scans the repository using native SARIF output, and optionally uploads the SARIF file through `github/codeql-action/upload-sarif`.
 
 ## Usage
 
@@ -63,6 +63,7 @@ jobs:
 | `mode` | `static` | `static`, `llm`, `enrich`, or `verify`. |
 | `language` | `auto` | Optional language filter such as `java`, `javascript`, `typescript`, `python`, `rust`, or `bash`. |
 | `upload-sarif` | `true` | Upload SARIF results to GitHub code scanning. |
+| `json-output` | `false` | Also generate a native JSON result file. This runs a second scan. |
 | `fail-on-findings` | `false` | Fail the job when one or more findings are reported. |
 | `llm-base-url` | empty | OpenAI-compatible LLM base URL for LLM mode. |
 | `llm-api-key` | empty | LLM API key. Prefer GitHub secrets or `github.token`. |
@@ -77,7 +78,7 @@ jobs:
 | Output | Description |
 | --- | --- |
 | `sarif-file` | Path to the generated SARIF file. |
-| `json-file` | Path to the raw `cognium-ai` JSON result file. |
+| `json-file` | Path to the native `cognium-ai` JSON result file when `json-output` is `true`. |
 | `findings-total` | Total findings parsed into SARIF. |
 
 ## Marketplace Publishing

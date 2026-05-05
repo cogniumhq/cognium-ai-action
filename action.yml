@@ -27,6 +27,10 @@ inputs:
     description: Upload SARIF results to GitHub code scanning.
     required: false
     default: "true"
+  json-output:
+    description: Also generate a native cognium-ai JSON result file. This runs a second scan.
+    required: false
+    default: "false"
   fail-on-findings:
     description: Fail the job when one or more findings are reported.
     required: false
@@ -65,7 +69,7 @@ outputs:
     description: Path to the generated SARIF file.
     value: ${{ steps.scan.outputs.sarif-file }}
   json-file:
-    description: Path to the raw cognium-ai JSON result file.
+    description: Path to the native cognium-ai JSON result file when json-output is true.
     value: ${{ steps.scan.outputs.json-file }}
   findings-total:
     description: Total findings parsed from cognium-ai output.
@@ -88,6 +92,7 @@ runs:
         INPUT_PACKAGE_VERSION: ${{ inputs.package-version }}
         INPUT_MODE: ${{ inputs.mode }}
         INPUT_LANGUAGE: ${{ inputs.language }}
+        INPUT_JSON_OUTPUT: ${{ inputs.json-output }}
         INPUT_LLM_BASE_URL: ${{ inputs.llm-base-url }}
         INPUT_LLM_API_KEY: ${{ inputs.llm-api-key }}
         INPUT_LLM_MODEL: ${{ inputs.llm-model }}
