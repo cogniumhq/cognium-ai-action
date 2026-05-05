@@ -1,0 +1,111 @@
+name: Cognium AI Security Scan
+author: Cognium
+description: Run cognium-ai SAST and publish SARIF results to GitHub code scanning.
+
+branding:
+  icon: shield
+  color: blue
+
+inputs:
+  path:
+    description: Path to scan, relative to the repository root.
+    required: false
+    default: .
+  package-version:
+    description: npm version of cognium-ai to install.
+    required: false
+    default: latest
+  mode:
+    description: Scan mode. Use static for deterministic scanning or llm for LLM enrichment.
+    required: false
+    default: static
+  language:
+    description: Optional language filter such as java, javascript, typescript, python, rust, or bash. Use auto for all supported languages.
+    required: false
+    default: auto
+  upload-sarif:
+    description: Upload SARIF results to GitHub code scanning.
+    required: false
+    default: "true"
+  fail-on-findings:
+    description: Fail the job when one or more findings are reported.
+    required: false
+    default: "false"
+  llm-base-url:
+    description: OpenAI-compatible LLM base URL. Required only when mode is llm unless configured through environment variables.
+    required: false
+    default: ""
+  llm-api-key:
+    description: LLM API key. Prefer passing a GitHub secret.
+    required: false
+    default: ""
+  llm-model:
+    description: LLM model name used when mode is llm.
+    required: false
+    default: ""
+  file-timeout:
+    description: Per-file scan timeout in seconds.
+    required: false
+    default: "30"
+  max-files:
+    description: Optional maximum number of files to scan.
+    required: false
+    default: ""
+  categories:
+    description: Optional comma-separated category filters passed to cognium-ai.
+    required: false
+    default: ""
+  extra-args:
+    description: Additional cognium-ai scan arguments. Keep this for trusted workflow configuration only.
+    required: false
+    default: ""
+
+outputs:
+  sarif-file:
+    description: Path to the generated SARIF file.
+    value: ${{ steps.scan.outputs.sarif-file }}
+  json-file:
+    description: Path to the raw cognium-ai JSON result file.
+    value: ${{ steps.scan.outputs.json-file }}
+  findings-total:
+    description: Total findings parsed from cognium-ai output.
+    value: ${{ steps.scan.outputs.findings-total }}
+
+runs:
+  using: composite
+  steps:
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: "22"
+
+    - name: Run cognium-ai
+      id: scan
+      shell: bash
+      run: bash "$GITHUB_ACTION_PATH/scripts/run.sh"
+      env:
+        INPUT_PATH: ${{ inputs.path }}
+        INPUT_PACKAGE_VERSION: ${{ inputs.package-version }}
+        INPUT_MODE: ${{ inputs.mode }}
+        INPUT_LANGUAGE: ${{ inputs.language }}
+        INPUT_LLM_BASE_URL: ${{ inputs.llm-base-url }}
+        INPUT_LLM_API_KEY: ${{ inputs.llm-api-key }}
+        INPUT_LLM_MODEL: ${{ inputs.llm-model }}
+        INPUT_FILE_TIMEOUT: ${{ inputs.file-timeout }}
+        INPUT_MAX_FILES: ${{ inputs.max-files }}
+        INPUT_CATEGORIES: ${{ inputs.categories }}
+        INPUT_EXTRA_ARGS: ${{ inputs.extra-args }}
+
+    - name: Upload SARIF
+      if: ${{ inputs.upload-sarif == 'true' }}
+      uses: github/codeql-action/upload-sarif@v4
+      with:
+        sarif_file: ${{ steps.scan.outputs.sarif-file }}
+        category: cognium-ai
+
+    - name: Enforce findings policy
+      if: ${{ inputs.fail-on-findings == 'true' && steps.scan.outputs.findings-total != '0' }}
+      shell: bash
+      run: |
+        echo "cognium-ai reported ${{ steps.scan.outputs.findings-total }} finding(s)."
+        exit 1
