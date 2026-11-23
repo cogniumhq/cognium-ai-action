@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "tierA": [
+    "action.yml",
+    "examples/**",
+    ".github/workflows/**",
+    "LICENSE"
+  ],
+  "tierB": [
+    "scripts/run.sh"
+  ]
+}
