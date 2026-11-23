@@ -66,7 +66,7 @@ jobs:
 | `json-output` | `false` | Also generate a native JSON result file. This runs a second scan. |
 | `fail-on-findings` | `false` | Fail the job when one or more findings are reported. |
 | `llm-base-url` | empty | OpenAI-compatible LLM base URL for LLM mode. |
-| `llm-api-key` | empty | LLM API key. Prefer GitHub secrets or `github.token`. |
+| `llm-api-key` | empty | LLM API key. Prefer GitHub secrets or `github.token`. Passed to `cognium-ai` as `LLM_API_KEY`, never on the command line, and masked in the job log. |
 | `llm-model` | empty | LLM model name for LLM mode. |
 | `file-timeout` | `30` | Per-file scan timeout in seconds. |
 | `max-files` | empty | Optional maximum number of files to scan. |

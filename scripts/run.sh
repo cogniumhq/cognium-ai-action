@@ -14,6 +14,55 @@ version_file="$out_dir/version.txt"
 
 mkdir -p "$out_dir"
 
+# Register a value with the runner so it is masked as *** in the job log.
+mask_value() {
+  local line
+  while IFS= read -r line; do
+    if [[ -n "$line" ]]; then
+      echo "::add-mask::$line"
+    fi
+  done <<< "$1"
+}
+
+# Build a printable copy of a command line in $redacted_cmd, replacing values
+# of key/token/secret/password flags and URL credentials with ***.
+redact_args() {
+  local arg redact_next=false
+  local -a out=()
+  for arg in "$@"; do
+    if [[ "$redact_next" == true ]]; then
+      mask_value "$arg"
+      out+=("***")
+      redact_next=false
+      continue
+    fi
+    case "$arg" in
+      --*key=*|--*token=*|--*secret=*|--*password=*)
+        mask_value "${arg#*=}"
+        out+=("${arg%%=*}=***")
+        ;;
+      --*key|--*token|--*secret|--*password)
+        out+=("$arg")
+        redact_next=true
+        ;;
+      *://*@*)
+        mask_value "$(printf '%s' "$arg" | sed -E 's#^.*://([^/@]*)@.*$#\1#')"
+        out+=("$(printf '%s' "$arg" | sed -E 's#://[^/@]*@#://***@#')")
+        ;;
+      *)
+        out+=("$arg")
+        ;;
+    esac
+  done
+  redacted_cmd="${out[*]}"
+}
+
+# Pass the API key to cognium-ai through the environment, never on argv.
+if [[ -n "${INPUT_LLM_API_KEY:-}" ]]; then
+  mask_value "$INPUT_LLM_API_KEY"
+  export LLM_API_KEY="$INPUT_LLM_API_KEY"
+fi
+
 echo "Installing cognium-ai@$package_version"
 npm install -g "cognium-ai@$package_version"
 
@@ -49,10 +98,6 @@ if [[ -n "${INPUT_LLM_BASE_URL:-}" ]]; then
   scan_args+=(--llm-base-url "$INPUT_LLM_BASE_URL")
 fi
 
-if [[ -n "${INPUT_LLM_API_KEY:-}" ]]; then
-  scan_args+=(--llm-api-key "$INPUT_LLM_API_KEY")
-fi
-
 if [[ -n "${INPUT_LLM_MODEL:-}" ]]; then
   scan_args+=(--llm-model "$INPUT_LLM_MODEL")
 fi
@@ -76,11 +121,13 @@ if [[ -n "${INPUT_EXTRA_ARGS:-}" ]]; then
   scan_args+=("${extra_args[@]}")
 fi
 
-echo "Running native SARIF scan: cognium-ai ${scan_args[*]} -f sarif -o $sarif_file"
+redact_args "${scan_args[@]}"
+
+echo "Running native SARIF scan: cognium-ai $redacted_cmd -f sarif -o $sarif_file"
 cognium-ai "${scan_args[@]}" -f sarif -o "$sarif_file"
 
 if [[ "${INPUT_JSON_OUTPUT:-false}" == "true" ]]; then
-  echo "Generating native JSON output: cognium-ai ${scan_args[*]} -f json -o $json_file"
+  echo "Generating native JSON output: cognium-ai $redacted_cmd -f json -o $json_file"
   cognium-ai "${scan_args[@]}" -f json -o "$json_file"
 fi
 

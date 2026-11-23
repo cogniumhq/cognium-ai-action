@@ -1,0 +1,32 @@
+name: Self-test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  secrets-not-logged:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run self-test with stub cognium-ai
+        run: bash scripts/self-test.sh
+
+      - name: Run real cognium-ai and check the key is not printed
+        env:
+          INPUT_PATH: scripts
+          INPUT_MODE: static
+          INPUT_JSON_OUTPUT: "true"
+          INPUT_LLM_API_KEY: self-test-key-3f9a62
+        run: |
+          set -o pipefail
+          bash scripts/run.sh 2>&1 | tee "$RUNNER_TEMP/run.log"
+          if grep -v '^::add-mask::' "$RUNNER_TEMP/run.log" | grep -qF "$INPUT_LLM_API_KEY"; then
+            echo "API key appears in the output" >&2
+            exit 1
+          fi
