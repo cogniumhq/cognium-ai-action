@@ -2,7 +2,7 @@
 set -euo pipefail
 
 target="${INPUT_PATH:-.}"
-package_version="${INPUT_PACKAGE_VERSION:-latest}"
+package_version="${INPUT_PACKAGE_VERSION:-4.28.0}"
 mode="${INPUT_MODE:-static}"
 language="${INPUT_LANGUAGE:-auto}"
 file_timeout="${INPUT_FILE_TIMEOUT:-30}"

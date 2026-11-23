@@ -59,7 +59,7 @@ jobs:
 | Input | Default | Description |
 | --- | --- | --- |
 | `path` | `.` | Path to scan, relative to the repository root. |
-| `package-version` | `latest` | npm version of `cognium-ai` to install. |
+| `package-version` | `4.28.0` | npm version of `cognium-ai` to install. |
 | `mode` | `static` | `static`, `llm`, `enrich`, or `verify`. |
 | `language` | `auto` | Optional language filter such as `java`, `javascript`, `typescript`, `python`, `rust`, or `bash`. |
 | `upload-sarif` | `true` | Upload SARIF results to GitHub code scanning. |
