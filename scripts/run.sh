@@ -78,7 +78,7 @@ case "$mode" in
     scan_args+=(--llm)
     ;;
   enrich)
-    scan_args+=(--llm-enrich)
+    scan_args+=(--llm --no-llm-verify)
     ;;
   verify)
     scan_args+=(--llm-verify)

@@ -16,7 +16,7 @@ inputs:
     required: false
     default: "4.28.0"
   mode:
-    description: Scan mode. Use static for deterministic scanning or llm for LLM enrichment.
+    description: Scan mode. Use static for deterministic scanning, llm for LLM enrichment and verification, enrich for LLM enrichment without the verification pass, or verify for the LLM verification pass.
     required: false
     default: static
   language:
@@ -40,7 +40,7 @@ inputs:
     required: false
     default: ""
   llm-api-key:
-    description: LLM API key. Prefer passing a GitHub secret.
+    description: LLM API key. Pass it from secrets.* (for example secrets.LLM_API_KEY or secrets.GITHUB_TOKEN). The runner prints a step's env block before the step runs, and only values from secrets.* are hidden there; a key from vars.*, a step output, or a literal is shown in the job log.
     required: false
     default: ""
   llm-model:

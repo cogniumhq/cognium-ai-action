@@ -22,6 +22,13 @@ if [[ "${1:-}" == "--version" ]]; then
 fi
 printf '%s\n' "$@" >> "$STUB_ARGV_LOG"
 printf '%s\n' "${LLM_API_KEY:-}" >> "$STUB_ENV_LOG"
+# cognium-ai 4.28.0 has no --llm-enrich and rejects unknown options.
+for arg in "$@"; do
+  if [[ "$arg" == "--llm-enrich" ]]; then
+    echo "error: unknown option '$arg'" >&2
+    exit 1
+  fi
+done
 out=""
 while [[ $# -gt 0 ]]; do
   if [[ "$1" == "-o" ]]; then
@@ -117,6 +124,16 @@ run_case base-url "user:$url_pass" -- \
 
 if grep -qF -- "$url_pass" "$work/base-url/visible"; then
   fail "base-url: URL password appears in the log"
+fi
+
+enrich_key="test-enrich-key-e4a8d1"
+run_case enrich "$enrich_key" -- \
+  INPUT_MODE=enrich \
+  INPUT_LLM_API_KEY="$enrich_key"
+
+if ! grep -qxF -- "--llm" "$work/enrich/argv" ||
+  ! grep -qxF -- "--no-llm-verify" "$work/enrich/argv"; then
+  fail "enrich: expected --llm --no-llm-verify on the cognium-ai command line"
 fi
 
 if [[ "$failures" -gt 0 ]]; then
