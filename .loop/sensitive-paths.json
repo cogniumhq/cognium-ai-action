@@ -1,0 +1,9 @@
+{
+  "version": 1,
+  "tierA": [
+    "action.yml",
+    "scripts/run.sh",
+    "examples/",
+    "LICENSE"
+  ]
+}
