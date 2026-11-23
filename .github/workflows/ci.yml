@@ -1,0 +1,56 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    name: Lint run.sh
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Syntax check
+        run: bash -n scripts/run.sh
+
+      - name: ShellCheck
+        run: shellcheck scripts/run.sh
+
+  self-test:
+    name: Run the action (static)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Scan scripts/
+        id: scan
+        uses: ./
+        with:
+          mode: static
+          path: scripts
+          upload-sarif: "false"
+
+      - name: Check findings-total is a number
+        env:
+          FINDINGS_TOTAL: ${{ steps.scan.outputs.findings-total }}
+        run: |
+          if [[ ! "$FINDINGS_TOTAL" =~ ^[0-9]+$ ]]; then
+            echo "findings-total is not a number: '$FINDINGS_TOTAL'" >&2
+            exit 1
+          fi
+          echo "findings-total=$FINDINGS_TOTAL"
