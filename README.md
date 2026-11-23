@@ -50,23 +50,25 @@ jobs:
         with:
           mode: llm
           llm-base-url: https://models.github.ai/inference
-          llm-api-key: ${{ github.token }}
+          llm-api-key: ${{ secrets.GITHUB_TOKEN }}
           llm-model: openai/gpt-4o-mini
 ```
+
+Pass `llm-api-key` from `secrets.*`. Before a step runs, the runner prints its `env:` block, which includes the key. Only values that come from `secrets.*` are hidden there; a key taken from `vars.*`, a step output, or a literal string is printed in plain text.
 
 ## Inputs
 
 | Input | Default | Description |
 | --- | --- | --- |
 | `path` | `.` | Path to scan, relative to the repository root. |
-| `package-version` | `latest` | npm version of `cognium-ai` to install. |
-| `mode` | `static` | `static`, `llm`, `enrich`, or `verify`. |
+| `package-version` | `4.28.0` | npm version of `cognium-ai` to install. |
+| `mode` | `static` | `static`, `llm`, `enrich` (LLM without the verification pass), or `verify`. |
 | `language` | `auto` | Optional language filter such as `java`, `javascript`, `typescript`, `python`, `rust`, or `bash`. |
 | `upload-sarif` | `true` | Upload SARIF results to GitHub code scanning. |
 | `json-output` | `false` | Also generate a native JSON result file. This runs a second scan. |
 | `fail-on-findings` | `false` | Fail the job when one or more findings are reported. |
 | `llm-base-url` | empty | OpenAI-compatible LLM base URL for LLM mode. |
-| `llm-api-key` | empty | LLM API key. Prefer GitHub secrets or `github.token`. |
+| `llm-api-key` | empty | LLM API key. Pass it from `secrets.*`; see [LLM-Enriched Scan](#llm-enriched-scan). Passed to `cognium-ai` as `LLM_API_KEY`, never on the command line. |
 | `llm-model` | empty | LLM model name for LLM mode. |
 | `file-timeout` | `30` | Per-file scan timeout in seconds. |
 | `max-files` | empty | Optional maximum number of files to scan. |
